@@ -5,15 +5,14 @@ const xss = require('xss-clean')
 const hpp = require('hpp')
 
 // ── 1. HELMET — Secure HTTP headers ─────────────────
-// Protects against clickjacking, XSS, MIME sniffing etc.
 const helmetConfig = helmet({
-  contentSecurityPolicy: false, // disabled to allow frontend assets
+  contentSecurityPolicy: false, 
   crossOriginEmbedderPolicy: false,
 })
 
 // ── 2. RATE LIMITING ─────────────────────────────────
 
-// General API rate limit — 100 requests per 10 minutes per IP
+// General API rate limit
 const apiLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 100,
@@ -23,9 +22,10 @@ const apiLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false }, // <-- Added to stop Render crash
 })
 
-// Auth rate limit — 10 attempts per 15 minutes (stops brute force login)
+// Auth rate limit
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -35,10 +35,11 @@ const authLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: true, // only count failed requests
+  skipSuccessfulRequests: true, 
+  validate: { xForwardedForHeader: false }, // <-- Added to stop Render crash
 })
 
-// Payment rate limit — 20 per hour (prevents payment abuse)
+// Payment rate limit
 const paymentLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 20,
@@ -46,9 +47,10 @@ const paymentLimiter = rateLimit({
     success: false,
     message: 'Too many payment requests. Please try again after an hour.',
   },
+  validate: { xForwardedForHeader: false }, // <-- Added to stop Render crash
 })
 
-// Chat rate limit — 30 messages per minute
+// Chat rate limit
 const chatLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 30,
@@ -56,22 +58,20 @@ const chatLimiter = rateLimit({
     success: false,
     message: 'Too many chat messages. Please slow down.',
   },
+  validate: { xForwardedForHeader: false }, // <-- Added to stop Render crash
 })
 
 // ── 3. MONGO SANITIZE ────────────────────────────────
-// Prevents NoSQL injection attacks e.g. { "$gt": "" }
 const mongoSanitizeConfig = mongoSanitize({
   replaceWith: '_',
 })
 
 // ── 4. XSS CLEAN ─────────────────────────────────────
-// Strips malicious HTML/JS from request body
 const xssClean = xss()
 
 // ── 5. HPP — HTTP Parameter Pollution ────────────────
-// Prevents duplicate query parameters attacks
 const hppConfig = hpp({
-  whitelist: ['price', 'capacity', 'category'], // allow duplicates for filters
+  whitelist: ['price', 'capacity', 'category'], 
 })
 
 module.exports = {
