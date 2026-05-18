@@ -1,10 +1,10 @@
 import axios from 'axios'
 
-// CHANGE THIS LINE: Add your live Render URL right here!
-const api = axios.create({ 
-  baseURL: 'https://groks-hotel-backend.onrender.com/api', 
-  withCredentials: true 
-})
+const BASE_URL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : '/api'
+
+const api = axios.create({ baseURL: BASE_URL, withCredentials: true })
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
