@@ -22,7 +22,7 @@ const {
   mongoSanitizeConfig,
   xssClean,
   hppConfig,
-} = require('./middleware/security'); // Clean path pointing to your security.js file
+} = require('./middleware/security'); 
 
 // Connect Database
 connectDB();
@@ -34,12 +34,20 @@ const server = http.createServer(app);
 // Socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1');
+      const isVercel = origin.includes('vercel.app');
+      if (isLocal || isVercel) {
+        return callback(null, true);
+      } else {
+        return callback(new Error('CORS Policy Violation for Socket.io'), false);
+      }
+    },
     methods: ['GET', 'POST'],
     credentials: true,
   },
 });
-
 
 // Make io accessible in controllers
 app.set('io', io);
@@ -71,20 +79,20 @@ io.on('connection', (socket) => {
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-// ── SECURED CORS MIDDLEWARE (The Guest List) ─────────
-const allowedOrigins = [
-  process.env.CLIENT_URL, 'https://groks-hotel-git-main-groks3310s-projects.vercel.app',
-  'http://localhost:5173',     // Your local Vite frontend port
-  'http://localhost:5174'      // Your local backend/fallback port from your network log
-];
-
+// ── DYNAMIC CORS MIDDLEWARE (The Smart Guest List) ───
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like your frontend Axios client initialization, Postman, or mobile apps)
+    // 1. Allow requests with no origin (like internal server checks or Postman)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      return callback(null, true); // Origin is trusted, let them through!
+    // 2. Trust local development environments
+    const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1');
+    
+    // 3. Trust ANY live deployment or deployment preview links coming from Vercel
+    const isVercel = origin.includes('vercel.app');
+
+    if (isLocal || isVercel) {
+      return callback(null, true); 
     } else {
       return callback(new Error('CORS Policy Violation: Access denied for this origin.'), false);
     }
@@ -99,29 +107,20 @@ app.use(cookieParser());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ── GLOBAL SECURITY MIDDLEWARE ───────────────────────
-app.use(helmetConfig);            // Sets defensive HTTP headers
-app.use(mongoSanitizeConfig);     // Sanitizes data to prevent NoSQL injection
-app.use(xssClean);                // Scrubs malicious script tags from requests
-app.use(hppConfig);               // Protects against HTTP Parameter Pollution
-app.use('/api', apiLimiter);      // General rate limit: 100 requests per 10 mins per IP
+app.use(helmetConfig);        
+app.use(mongoSanitizeConfig); 
+app.use(xssClean);            
+app.use(hppConfig);           
+app.use('/api', apiLimiter);  
 
 // ── ROUTES WITH SPECIFIC SECURITY LIMITERS ───────────
-
-// Auth route protected with brute-force rate limiter
 app.use('/api/auth', authLimiter, require('./routes/auth'));
-
 app.use('/api/rooms', require('./routes/rooms'));
 app.use('/api/bookings', require('./routes/bookings'));
-
-// Payments route protected from transaction spamming
 app.use('/api/payments', paymentLimiter, require('./routes/payments'));
-
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/admin', require('./routes/admin'));
-
-// AI Chatbot endpoint restricted to prevent API quota/resource burning
 app.use('/api/chat', chatLimiter, require('./routes/chat'));
-
 app.use('/api/receipt', require('./routes/receipt'));
 app.use('/api/seed', require('./routes/seed'));
 
