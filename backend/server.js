@@ -40,6 +40,7 @@ const io = new Server(server, {
   },
 });
 
+
 // Make io accessible in controllers
 app.set('io', io);
 
@@ -72,7 +73,7 @@ if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 // ── SECURED CORS MIDDLEWARE (The Guest List) ─────────
 const allowedOrigins = [
-  process.env.CLIENT_URL,      // Your live deployed website URL (saved inside your .env file later)
+  process.env.CLIENT_URL, 'https://groks-hotel-git-main-groks3310s-projects.vercel.app',
   'http://localhost:5173',     // Your local Vite frontend port
   'http://localhost:5174'      // Your local backend/fallback port from your network log
 ];
