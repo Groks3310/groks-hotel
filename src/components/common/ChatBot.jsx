@@ -117,7 +117,8 @@ export default function ChatBot() {
     setLoading(true)
 
     try {
-      const res = await fetch('/api/chat', {
+      const BASE = import.meta.env.VITE_API_URL || ''
+      const res = await fetch(`${BASE}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

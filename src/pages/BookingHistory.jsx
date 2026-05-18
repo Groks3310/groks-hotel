@@ -23,7 +23,8 @@ const PAY_STYLES = {
 const handleDownloadReceipt = async (bookingId, bookingCode) => {
   try {
     const token = localStorage.getItem('token')
-    const response = await fetch(`/api/receipt/${bookingId}`, {
+    const BASE = import.meta.env.VITE_API_URL || ''
+    const response = await fetch(`${BASE}/api/receipt/${bookingId}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     if (!response.ok) throw new Error('Failed')
