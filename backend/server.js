@@ -28,10 +28,19 @@ const {
 connectDB();
 
 const app = express();
+
+// ── 1. PROXY SETTING (Must run before any rate-limiters) ──
 app.set('trust proxy', 1);
+
+// ── 2. STANDARD BODY PARSERS (Must run before routes and sanitizers) ──
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(cookieParser());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 const server = http.createServer(app);
 
-// Socket.io setup
+// ── 3. SOCKET.IO SETUP ───────────────────────────────
 const io = new Server(server, {
   cors: {
     origin: function (origin, callback) {
@@ -79,16 +88,12 @@ io.on('connection', (socket) => {
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-// ── DYNAMIC CORS MIDDLEWARE (The Smart Guest List) ───
+// ── 4. DYNAMIC CORS MIDDLEWARE (The Smart Guest List) ───
 app.use(cors({
   origin: function (origin, callback) {
-    // 1. Allow requests with no origin (like internal server checks or Postman)
     if (!origin) return callback(null, true);
     
-    // 2. Trust local development environments
     const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1');
-    
-    // 3. Trust ANY live deployment or deployment preview links coming from Vercel
     const isVercel = origin.includes('vercel.app');
 
     if (isLocal || isVercel) {
@@ -97,23 +102,17 @@ app.use(cors({
       return callback(new Error('CORS Policy Violation: Access denied for this origin.'), false);
     }
   },
-  credentials: true, // Enables secure cookie tracking between frontend and backend
+  credentials: true, 
 }));
 
-// Standard Body Parsers
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-app.use(cookieParser());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// ── GLOBAL SECURITY MIDDLEWARE ───────────────────────
+// ── 5. GLOBAL SECURITY MIDDLEWARE (Now runs with a fully parsed body) ───
 app.use(helmetConfig);        
 app.use(mongoSanitizeConfig); 
 app.use(xssClean);            
 app.use(hppConfig);           
 app.use('/api', apiLimiter);  
 
-// ── ROUTES WITH SPECIFIC SECURITY LIMITERS ───────────
+// ── 6. ROUTES WITH SPECIFIC SECURITY LIMITERS ───────────
 app.use('/api/auth', authLimiter, require('./routes/auth'));
 app.use('/api/rooms', require('./routes/rooms'));
 app.use('/api/bookings', require('./routes/bookings'));
