@@ -1,0 +1,247 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  :root {
+    --navy: #0B1320;
+    --ivory: #F7F3EE;
+    --charcoal: #1C1C1C;
+    --gold: #C8A96A;
+    --sand: #D8C3A5;
+    --bronze: #A58E6F;
+    --glass: rgba(255, 255, 255, 0.06);
+    --glass-border: rgba(200, 169, 106, 0.2);
+    --shadow: rgba(0, 0, 0, 0.4);
+  }
+
+  html { scroll-behavior: smooth; scroll-padding-top: 0; }
+
+  /* ── IMAGE QUALITY BOOST ── */
+  img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0);          /* forces GPU layer = sharper render */
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+    /* Prevent blurry downscaling */
+    image-rendering: high-quality;
+  }
+
+  body {
+    background-color: var(--navy);
+    color: var(--ivory);
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--navy); }
+  ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--bronze); }
+  
+  ::selection { background: rgba(200, 169, 106, 0.3); color: var(--ivory); }
+}
+
+@layer components {
+  .glass-card {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+  }
+
+  .luxury-heading {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    line-height: 1.2;
+  }
+
+  .gold-text { color: var(--gold); }
+
+  .btn-gold {
+    background: linear-gradient(135deg, #C8A96A, #A58E6F);
+    color: var(--navy);
+    font-family: 'Jost', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    padding: 14px 36px;
+    border-radius: 2px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-gold::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #D8C3A5, #C8A96A);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .btn-gold:hover::before { opacity: 1; }
+  .btn-gold:hover { box-shadow: 0 8px 32px rgba(200, 169, 106, 0.4); transform: translateY(-2px); }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    font-family: 'Jost', sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    padding: 13px 35px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.4s ease;
+  }
+
+  .btn-outline:hover {
+    background: rgba(200, 169, 106, 0.1);
+    box-shadow: 0 0 20px rgba(200, 169, 106, 0.2);
+  }
+
+  .section-label {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .divider-gold {
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 16px auto;
+  }
+
+  .input-luxury {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(200, 169, 106, 0.2);
+    color: var(--ivory);
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    padding: 14px 18px;
+    border-radius: 4px;
+    width: 100%;
+    transition: all 0.3s ease;
+    outline: none;
+    font-size: 0.9rem;
+  }
+
+  .input-luxury::placeholder { color: rgba(247, 243, 238, 0.35); }
+  .input-luxury:focus {
+    border-color: var(--gold);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 0 0 3px rgba(200, 169, 106, 0.1);
+  }
+
+  .page-transition {
+    animation: pageEnter 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  
+  @keyframes pageEnter {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .shimmer {
+    background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .star-rating { display: flex; gap: 4px; }
+  .star-filled { color: var(--gold); }
+  .star-empty { color: rgba(200, 169, 106, 0.3); }
+}
+
+/* Swiper overrides */
+.swiper-pagination-bullet { background: var(--sand) !important; opacity: 0.5; }
+.swiper-pagination-bullet-active { background: var(--gold) !important; opacity: 1; }
+.swiper-button-next, .swiper-button-prev { color: var(--gold) !important; }
+
+/* Marquee animation */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+  width: max-content;
+}
+
+/* ── TEXT READABILITY IMPROVEMENTS ── */
+
+/* Make body text slightly brighter */
+body { color: #F0EDE8; }
+
+/* Headings always crisp */
+h1, h2, h3, h4 {
+  text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+}
+
+/* Text on top of images — always readable */
+.hero-text {
+  text-shadow: 0 2px 30px rgba(0,0,0,0.8), 0 4px 60px rgba(0,0,0,0.4);
+}
+
+/* Cards — slightly brighter body text */
+.glass-card p {
+  color: rgba(247, 243, 238, 0.70);
+}
+
+/* Section text over dark backgrounds */
+section p {
+  color: rgba(247, 243, 238, 0.65);
+}
+
+/* Gold accent text always bright */
+.gold-text, .text-\[#C8A96A\] {
+  color: #C8A96A !important;
+}
+
+/* Improve input placeholder visibility */
+input::placeholder, textarea::placeholder {
+  color: rgba(247, 243, 238, 0.35) !important;
+}
+
+/* Image overlay utility class */
+.img-overlay-dark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(11,19,32,0.5) 0%, rgba(11,19,32,0.2) 50%, rgba(11,19,32,0.7) 100%);
+  pointer-events: none;
+}
+
+/* ── BADGE READABILITY ── */
+/* All badges/labels on top of images get dark backdrop */
+.badge-on-image {
+  background: rgba(11, 19, 32, 0.75) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
