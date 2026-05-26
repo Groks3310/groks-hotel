@@ -12,7 +12,7 @@ const fs = require('fs');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/error');
 
-// ── IMPORT SECURITY CONFIGURATION ────────────────────
+// ── IMPORT SECURITY CONFIGURATION (FIXED: Added helmetConfig here) ──
 const {
   helmetConfig,
   apiLimiter,
@@ -36,7 +36,30 @@ app.set('trust proxy', 1);
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ── MERGED SMART STATIC ASSET ROUTER & REDIRECT FALLBACK ──
+app.use('/uploads/:filename', (req, res, next) => {
+  const filePath = path.join(__dirname, 'uploads', req.params.filename);
+
+  // Set explicit cross-origin permissions
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+
+  // If the file physically exists on the disk volume, stream it right away
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  // If Render wiped the local file, redirect to a clean default avatar instead of throwing a 404
+  res.redirect('https://cdn-icons-png.flaticon.com/512/149/149071.png');
+});
+
+// Fallback base configuration for general directory access
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(path.join(__dirname, 'uploads')));
 
 const server = http.createServer(app);
 
@@ -105,8 +128,17 @@ app.use(cors({
   credentials: true, 
 }));
 
-// ── 5. GLOBAL SECURITY MIDDLEWARE (Now runs with a fully parsed body) ───
+// ── 5. GLOBAL SECURITY MIDDLEWARE ────────────────────────
+// Force browser headers to cooperate with cross-origin environments
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
+  next();
+});
+
+// Using your pre-configured helmet setup from security.js
 app.use(helmetConfig);        
+
 app.use(mongoSanitizeConfig); 
 app.use(xssClean);            
 app.use(hppConfig);           

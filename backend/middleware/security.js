@@ -5,8 +5,10 @@ const xss = require('xss-clean')
 const hpp = require('hpp')
 
 // ── 1. HELMET — Secure HTTP headers ─────────────────
+// FIXED: Explicitly configure Helmet to allow cross-origin assets globally
 const helmetConfig = helmet({
   contentSecurityPolicy: false, 
+  crossOriginResourcePolicy: { policy: "cross-origin" },
   crossOriginEmbedderPolicy: false,
 })
 
@@ -22,7 +24,7 @@ const apiLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  validate: { xForwardedForHeader: false }, // <-- Added to stop Render crash
+  validate: { xForwardedForHeader: false }, 
 })
 
 // Auth rate limit
@@ -36,7 +38,7 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true, 
-  validate: { xForwardedForHeader: false }, // <-- Added to stop Render crash
+  validate: { xForwardedForHeader: false }, 
 })
 
 // Payment rate limit
@@ -47,7 +49,7 @@ const paymentLimiter = rateLimit({
     success: false,
     message: 'Too many payment requests. Please try again after an hour.',
   },
-  validate: { xForwardedForHeader: false }, // <-- Added to stop Render crash
+  validate: { xForwardedForHeader: false }, 
 })
 
 // Chat rate limit
@@ -58,7 +60,7 @@ const chatLimiter = rateLimit({
     success: false,
     message: 'Too many chat messages. Please slow down.',
   },
-  validate: { xForwardedForHeader: false }, // <-- Added to stop Render crash
+  validate: { xForwardedForHeader: false }, 
 })
 
 // ── 3. MONGO SANITIZE ────────────────────────────────
