@@ -37,8 +37,9 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 
-// ── MERGED FOOLPROOF LOCAL FILE FALLBACK MIDDLEWARE ──
+// ── FIXED ABSOLUTE PATH STATIC ASSET ROUTER ──
 app.use('/uploads/:filename', (req, res, next) => {
+  // path.resolve starts directly at the root folder 'groks-hotel-backend'
   const filePath = path.resolve('uploads', req.params.filename);
 
   // Set explicit cross-origin permissions to allow client display
@@ -51,7 +52,6 @@ app.use('/uploads/:filename', (req, res, next) => {
   }
 
   // 2. If Render wiped the file, stream our local fallback image file directly.
-  // This completely removes cross-origin redirects and satisfies strict mobile safety checks!
   const fallbackPath = path.resolve('default-avatar.png');
   
   if (fs.existsSync(fallbackPath)) {
@@ -133,7 +133,7 @@ app.use(cors({
       return callback(new Error('CORS Policy Violation: Access denied for this origin.'), false);
     }
   },
-  credentials: true, 
+  credentials: true, // 🌟 ALLOWS SECURE SESSION COOKIES ACROSS DOMAINS
 }));
 
 // ── 5. GLOBAL SECURITY MIDDLEWARE ────────────────────────
@@ -144,7 +144,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Using your pre-configured helmet setup from security.js
+// Using pre-configured helmet setup from security.js
 app.use(helmetConfig);        
 
 app.use(mongoSanitizeConfig); 
