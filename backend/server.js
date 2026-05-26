@@ -37,23 +37,29 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 
-// ── FIXED ABSOLUTE PATH STATIC ASSET ROUTER ──
+// ── MERGED FOOLPROOF LOCAL FILE FALLBACK MIDDLEWARE ──
 app.use('/uploads/:filename', (req, res, next) => {
-  // path.resolve starts directly at the root folder 'groks-hotel-backend'
-  // and looks for the 'uploads' folder no matter how the app is started on Render.
   const filePath = path.resolve('uploads', req.params.filename);
 
-  // Set explicit cross-origin permissions
+  // Set explicit cross-origin permissions to allow client display
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
-  // If the file physically exists on Render's disk, stream it
+  // 1. If the file physically exists on Render's disk volume, serve it natively
   if (fs.existsSync(filePath)) {
     return res.sendFile(filePath);
   }
 
-  // If the file is missing from Render's disk, redirect to the default image instead of throwing a 404
-  res.redirect('https://cdn-icons-png.flaticon.com/512/149/149071.png');
+  // 2. If Render wiped the file, stream our local fallback image file directly.
+  // This completely removes cross-origin redirects and satisfies strict mobile safety checks!
+  const fallbackPath = path.resolve('default-avatar.png');
+  
+  if (fs.existsSync(fallbackPath)) {
+    return res.sendFile(fallbackPath);
+  }
+
+  // Final absolute backup safety catch if default-avatar.png isn't found either
+  res.status(404).send('Image not found');
 });
 
 // Fallback base configuration for general directory access
