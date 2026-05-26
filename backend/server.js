@@ -12,7 +12,7 @@ const fs = require('fs');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/error');
 
-// ── IMPORT SECURITY CONFIGURATION (FIXED: Added helmetConfig here) ──
+// ── IMPORT SECURITY CONFIGURATION ──
 const {
   helmetConfig,
   apiLimiter,
@@ -37,20 +37,22 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 
-// ── MERGED SMART STATIC ASSET ROUTER & REDIRECT FALLBACK ──
+// ── FIXED ABSOLUTE PATH STATIC ASSET ROUTER ──
 app.use('/uploads/:filename', (req, res, next) => {
-  const filePath = path.join(__dirname, 'uploads', req.params.filename);
+  // path.resolve starts directly at the root folder 'groks-hotel-backend'
+  // and looks for the 'uploads' folder no matter how the app is started on Render.
+  const filePath = path.resolve('uploads', req.params.filename);
 
   // Set explicit cross-origin permissions
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
-  // If the file physically exists on the disk volume, stream it right away
+  // If the file physically exists on Render's disk, stream it
   if (fs.existsSync(filePath)) {
     return res.sendFile(filePath);
   }
 
-  // If Render wiped the local file, redirect to a clean default avatar instead of throwing a 404
+  // If the file is missing from Render's disk, redirect to the default image instead of throwing a 404
   res.redirect('https://cdn-icons-png.flaticon.com/512/149/149071.png');
 });
 
@@ -59,7 +61,7 @@ app.use('/uploads', (req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
-}, express.static(path.join(__dirname, 'uploads')));
+}, express.static(path.resolve('uploads')));
 
 const server = http.createServer(app);
 
@@ -107,8 +109,8 @@ io.on('connection', (socket) => {
   });
 });
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, 'uploads');
+// Ensure uploads directory exists at root level
+const uploadsDir = path.resolve('uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 // ── 4. DYNAMIC CORS MIDDLEWARE (The Smart Guest List) ───
