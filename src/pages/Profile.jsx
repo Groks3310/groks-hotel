@@ -50,14 +50,11 @@ export default function Profile() {
     } finally { setSaving(false) }
   }
 
-  // ── FIXED: Build absolute backend path for saved profile URLs ──
   const getAvatarSrc = () => {
     if (avatarPreview) return avatarPreview;
     if (!user?.avatar) return null;
-    
     if (user.avatar.startsWith('http')) return user.avatar;
     
-    // Attaches your Render server domain securely to the relative path string
     const baseSlash = user.avatar.startsWith('/') ? '' : '/';
     return `https://groks-hotel-backend.onrender.com${baseSlash}${user.avatar}`;
   };
@@ -86,7 +83,6 @@ export default function Profile() {
                   src={AVATAR_SRC} 
                   alt={user?.name} 
                   className="w-full h-full object-cover" 
-                  // 🌟 FIXED FALLBACK: Swaps instantly to inline SVG asset if file is missing from disk
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23C8A96A'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>";

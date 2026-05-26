@@ -1,26 +1,27 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 
 export const AuthContext = createContext();
+
+const api = axios.create({
+  baseURL: 'https://groks-hotel-backend.onrender.com',
+  withCredentials: true
+});
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 1. Load user data whenever the app starts or changes pages
   const loadUser = async () => {
     try {
-      // Points directly to your Render backend
-      const res = await axios.get('https://groks-hotel-backend.onrender.com/api/auth/me', {
-        withCredentials: true // 👈 CRITICAL: Keeps your cookie session alive across pages
-      });
-
+      const res = await api.get('/api/auth/me');
       if (res.data && res.data.success) {
-        // 🌟 FIXED: Explicitly save the backend user object (including the avatar path) to state
         setUser(res.data.user);
+      } else {
+        setUser(null);
       }
     } catch (error) {
-      console.error("Error loading user session:", error);
+      console.error("Session load failed:", error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -31,15 +32,31 @@ export const AuthProvider = ({ children }) => {
     loadUser();
   }, []);
 
-  // 2. Update profile state dynamically when a user changes their data or uploads an avatar
-  const updateProfileState = (updatedUser) => {
-    // 🌟 FIXED: Ensures the frontend state immediately reflects the backend's saved database paths
+  // Matches the exact function named used inside Profile.jsx
+  const updateUser = (updatedUser) => {
     setUser(updatedUser);
   };
 
+  const logout = async () => {
+    try {
+      await api.get('/api/auth/logout');
+      setUser(null);
+    } catch (err) {
+      console.error("Logout error", err);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, loadUser, updateProfileState }}>
-      {children}
+    <AuthContext.Provider value={{ user, setUser, loading, loadUser, updateUser, logout }}>
+      {!loading && children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
