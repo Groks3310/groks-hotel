@@ -1,62 +1,60 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import { createContext, useContext, useState, useEffect } from 'react'
+import { authAPI } from '../utils/api'
 
-export const AuthContext = createContext();
-
-const api = axios.create({
-  baseURL: 'https://groks-hotel-backend.onrender.com',
-  withCredentials: true
-});
+const AuthContext = createContext(null)
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  const loadUser = async () => {
-    try {
-      const res = await api.get('/api/auth/me');
-      if (res.data && res.data.success) {
-        setUser(res.data.user);
-      } else {
-        setUser(null);
-      }
-    } catch (error) {
-      console.error("Session load failed:", error);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadUser();
-  }, []);
+    const token = localStorage.getItem('token')
+    if (token) fetchMe(token)
+    else setLoading(false)
+  }, [])
 
-  // Matches the exact function named used inside Profile.jsx
-  const updateUser = (updatedUser) => {
-    setUser(updatedUser);
-  };
+  const fetchMe = async (token) => {
+    try {
+      const res = await authAPI.getMe()
+      setUser(res.data.user)
+    } catch {
+      localStorage.removeItem('token')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const login = async (email, password) => {
+    const res = await authAPI.login({ email, password })
+    localStorage.setItem('token', res.data.token)
+    setUser(res.data.user)
+    return res.data
+  }
+
+  const register = async (name, email, password, phone) => {
+    const res = await authAPI.register({ name, email, password, phone })
+    localStorage.setItem('token', res.data.token)
+    setUser(res.data.user)
+    return res.data
+  }
 
   const logout = async () => {
-    try {
-      await api.get('/api/auth/logout');
-      setUser(null);
-    } catch (err) {
-      console.error("Logout error", err);
-    }
-  };
+    await authAPI.logout()
+    localStorage.removeItem('token')
+    setUser(null)
+  }
+
+  const updateUser = (updatedUser) => setUser(updatedUser)
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, loadUser, updateUser, logout }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
+      {children}
     </AuthContext.Provider>
-  );
-};
+  )
+}
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
+  return ctx
+}
