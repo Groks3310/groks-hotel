@@ -50,15 +50,7 @@ export default function Profile() {
     } finally { setSaving(false) }
   }
 
-  // Merged Logic: Handle absolute URLs and local previews safely
-  const getAvatarSrc = () => {
-    if (avatarPreview) return avatarPreview;
-    if (!user?.avatar) return null;
-    if (user.avatar.startsWith('http')) return user.avatar;
-    return `https://groks-hotel-backend.onrender.com${user.avatar.startsWith('/') ? '' : '/'}${user.avatar}`;
-  };
-
-  const AVATAR_SRC = getAvatarSrc();
+  const AVATAR_SRC = avatarPreview || user?.avatar || null
 
   return (
     <div className="min-h-screen pt-20 pb-24">
@@ -78,15 +70,7 @@ export default function Profile() {
           <div className="relative">
             <div className="w-24 h-24 rounded-full border-2 border-[#C8A96A]/40 overflow-hidden bg-[rgba(200,169,106,0.1)] flex items-center justify-center">
               {AVATAR_SRC ? (
-                <img 
-                  src={AVATAR_SRC} 
-                  alt={user?.name} 
-                  className="w-full h-full object-cover" 
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.parentElement.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23C8A96A" style="width:32px; height:32px;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
-                  }}
-                />
+                <img src={AVATAR_SRC} alt={user?.name} className="w-full h-full object-cover" />
               ) : (
                 <FiUser size={32} className="text-[#C8A96A]/50" />
               )}
@@ -123,7 +107,7 @@ export default function Profile() {
           ))}
         </div>
 
-        {/* Forms remain the same */}
+        {/* Profile form */}
         {tab === 'profile' && (
           <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="glass-card p-8">
             <form onSubmit={handleProfileSave} className="space-y-5">
@@ -141,6 +125,7 @@ export default function Profile() {
                   <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C8A96A]/50" size={15} />
                   <input type="email" value={user?.email} disabled className="input-luxury pl-11 opacity-40 cursor-not-allowed" />
                 </div>
+                <p className="text-[0.55rem] text-[#F7F3EE]/25 mt-1 tracking-wider">Email cannot be changed</p>
               </div>
               <div>
                 <label className="text-[0.6rem] tracking-[0.25em] uppercase text-[#F7F3EE]/50 block mb-2">Phone Number</label>
@@ -156,27 +141,30 @@ export default function Profile() {
             </form>
           </motion.div>
         )}
-        
+
+        {/* Password form */}
         {tab === 'password' && (
-           <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="glass-card p-8">
-             <form onSubmit={handlePasswordSave} className="space-y-5">
-               {['currentPassword', 'newPassword', 'confirm'].map((field) => (
-                 <div key={field}>
-                   <label className="text-[0.6rem] tracking-[0.25em] uppercase text-[#F7F3EE]/50 block mb-2">
-                     {field.replace(/([A-Z])/g, ' $1').toUpperCase()}
-                   </label>
-                   <div className="relative">
-                     <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C8A96A]/50" size={15} />
-                     <input type="password" value={pwForm[field]} onChange={e => setPwForm(p => ({ ...p, [field]: e.target.value }))}
-                       className="input-luxury pl-11" placeholder="••••••••" required />
-                   </div>
-                 </div>
-               ))}
-               <button type="submit" disabled={saving} className="btn-gold w-full">
-                 {saving ? 'Updating...' : 'Update Password'}
-               </button>
-             </form>
-           </motion.div>
+          <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="glass-card p-8">
+            <form onSubmit={handlePasswordSave} className="space-y-5">
+              {[
+                ['currentPassword', 'Current Password', 'Enter current password'],
+                ['newPassword', 'New Password', 'Min. 6 characters'],
+                ['confirm', 'Confirm New Password', 'Repeat new password'],
+              ].map(([field, label, placeholder]) => (
+                <div key={field}>
+                  <label className="text-[0.6rem] tracking-[0.25em] uppercase text-[#F7F3EE]/50 block mb-2">{label}</label>
+                  <div className="relative">
+                    <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C8A96A]/50" size={15} />
+                    <input type="password" value={pwForm[field]} onChange={e => setPwForm(p => ({ ...p, [field]: e.target.value }))}
+                      className="input-luxury pl-11" placeholder={placeholder} required minLength={field !== 'currentPassword' ? 6 : undefined} />
+                  </div>
+                </div>
+              ))}
+              <button type="submit" disabled={saving} className="btn-gold w-full">
+                {saving ? 'Updating...' : 'Update Password'}
+              </button>
+            </form>
+          </motion.div>
         )}
       </div>
     </div>
