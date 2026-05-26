@@ -13,11 +13,13 @@ const sendToken = (user, statusCode, res) => {
     throw new Error("Authentication Error: Token generation method not found on User Model schema.");
   }
 
+  // ── FIXED: Cross-Domain Cookie Settings for Vercel -> Render ──
   const options = {
     expires: new Date(Date.now() + (process.env.COOKIE_EXPIRE || 30) * 24 * 60 * 60 * 1000),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    // Must be true on production for sameSite: 'none' to be accepted by mobile devices
+    secure: true, 
+    sameSite: 'none', // 🌟 Allows cookie delivery between different domains
   };
 
   res.status(statusCode).cookie('token', token, options).json({
@@ -83,11 +85,12 @@ exports.login = async (req, res, next) => {
 // @route   GET /api/auth/logout
 // @access  Public
 exports.logout = (req, res) => {
+  // ── FIXED: Match options with setup cookie to clear correctly cross-domain ──
   res.cookie('token', '', { 
     expires: new Date(0), 
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
+    secure: true,
+    sameSite: 'none'
   });
   res.json({ success: true, message: 'Logged out successfully' });
 };
