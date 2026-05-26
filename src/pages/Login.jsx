@@ -1,13 +1,14 @@
-import { useState } from 'react'
+
+
+import { useRef, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
 
 export default function Login() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const emailRef = useRef()
+  const passwordRef = useRef()
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
@@ -19,7 +20,7 @@ export default function Login() {
     e.preventDefault()
     setLoading(true)
     try {
-      await login(email, password)
+      await login(emailRef.current.value, passwordRef.current.value)
       toast.success('Welcome back.')
       navigate(from, { replace: true })
     } catch (err) {
@@ -29,20 +30,13 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6 relative overflow-hidden">
-      {/* Background */}
       <div className="absolute inset-0">
-        <img src="https://placehold.co/1920x1080/0d1b2a/C8A96A?text=Groks+Hotel" alt="bg" className="w-full h-full object-cover opacity-20" />
-        <div className="absolute inset-0 bg-gradient-radial from-[#0B1320]/50 to-[#0B1320]" />
+        <img src="/room8.jpg" alt="bg" className="w-full h-full object-cover opacity-25" />
+        <div className="absolute inset-0 bg-[#0B1320]/70" />
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-        className="relative z-10 w-full max-w-md"
-      >
+      <div className="relative z-10 w-full max-w-md animate-fade-in">
         <div className="glass-card p-10">
-          {/* Logo */}
           <div className="text-center mb-10">
             <Link to="/" className="inline-block">
               <div className="font-serif text-3xl font-light tracking-[0.2em] text-[#F7F3EE]">GROKS</div>
@@ -58,9 +52,14 @@ export default function Login() {
               <label className="text-[0.6rem] tracking-[0.25em] uppercase text-[#F7F3EE]/50 block mb-2">Email Address</label>
               <div className="relative">
                 <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C8A96A]/50" size={15} />
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="your@email.com" required
-                  className="input-luxury pl-11" />
+                <input
+                  ref={emailRef}
+                  type="email"
+                  placeholder="your@email.com"
+                  required
+                  autoComplete="email"
+                  className="input-luxury pl-11"
+                />
               </div>
             </div>
 
@@ -68,9 +67,14 @@ export default function Login() {
               <label className="text-[0.6rem] tracking-[0.25em] uppercase text-[#F7F3EE]/50 block mb-2">Password</label>
               <div className="relative">
                 <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C8A96A]/50" size={15} />
-                <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••" required
-                  className="input-luxury pl-11 pr-11" />
+                <input
+                  ref={passwordRef}
+                  type={showPass ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  required
+                  autoComplete="current-password"
+                  className="input-luxury pl-11 pr-11"
+                />
                 <button type="button" onClick={() => setShowPass(!showPass)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-[#F7F3EE]/30 hover:text-[#C8A96A] transition-colors">
                   {showPass ? <FiEyeOff size={15} /> : <FiEye size={15} />}
@@ -79,14 +83,8 @@ export default function Login() {
             </div>
 
             <button type="submit" disabled={loading}
-              className="btn-gold w-full text-sm mt-2 disabled:opacity-60 disabled:cursor-not-allowed relative overflow-hidden">
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    className="inline-block w-4 h-4 border-2 border-[#0B1320]/30 border-t-[#0B1320] rounded-full" />
-                  Signing in...
-                </span>
-              ) : 'Sign In'}
+              className="btn-gold w-full text-sm mt-2 disabled:opacity-60 disabled:cursor-not-allowed">
+              {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
@@ -99,7 +97,7 @@ export default function Login() {
             </p>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   )
 }

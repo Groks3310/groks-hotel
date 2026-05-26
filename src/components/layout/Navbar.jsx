@@ -9,6 +9,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [dropOpen, setDropOpen] = useState(false)
+  const [imgError, setImgError] = useState(false) // 👈 Track image loading status safely
   const { user, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
@@ -22,6 +23,7 @@ export default function Navbar() {
   useEffect(() => {
     setMenuOpen(false)
     setDropOpen(false)
+    setImgError(false) // 👈 Reset image error flag when path routes change
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [location.pathname])
 
@@ -83,12 +85,27 @@ export default function Navbar() {
                 onClick={() => setDropOpen(!dropOpen)}
                 className="flex items-center gap-3 group"
               >
-                <div className="w-9 h-9 rounded-full border border-[#C8A96A]/40 flex items-center justify-center bg-[rgba(200,169,106,0.1)] text-[#C8A96A] group-hover:border-[#C8A96A] transition-all">
-                  {user.avatar ? (
-                    <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full object-cover" />
-                  ) : (
-                    <FiUser size={16} />
-                  )}
+                <div className="w-9 h-9 rounded-full border border-[#C8A96A]/40 flex items-center justify-center bg-[rgba(200,169,106,0.1)] text-[#C8A96A] group-hover:border-[#C8A96A] transition-all overflow-hidden">
+                  <div className="w-9 h-9 rounded-full border border-[#C8A96A]/40 flex items-center justify-center bg-[rgba(200,169,106,0.1)] text-[#C8A96A] group-hover:border-[#C8A96A] transition-all overflow-hidden">
+  // ── UPDATED NAVBAR IMAGE CONTAINER ──
+<div className="w-9 h-9 rounded-full border border-[#C8A96A]/40 flex items-center justify-center bg-[rgba(200,169,106,0.1)] text-[#C8A96A] overflow-hidden">
+  {user && user.avatar ? (
+    <img 
+      src={user.avatar.startsWith('http') ? user.avatar : `https://groks-hotel-backend.onrender.com${user.avatar}`} 
+      alt={user.name} 
+      className="w-full h-full object-cover" 
+      
+      // 🌟 THE FOOLPROOF FIX: If the backend returns a 404, this event swaps it instantly!
+      onError={(e) => {
+        e.target.onerror = null; // Stops infinite loops if the fallback image fails
+        e.target.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png"; // Clean default icon
+      }}
+    />
+  ) : (
+    <FiUser size={16} />
+  )}
+</div>
+</div>
                 </div>
                 <span className="text-[0.7rem] tracking-[0.15em] uppercase text-[#F7F3EE]/80 group-hover:text-[#C8A96A] transition-colors">
                   {user.name.split(' ')[0]}
