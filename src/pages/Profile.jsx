@@ -50,7 +50,19 @@ export default function Profile() {
     } finally { setSaving(false) }
   }
 
-  const AVATAR_SRC = avatarPreview || user?.avatar || null
+  // ── FIXED: Build absolute backend path for saved profile URLs ──
+  const getAvatarSrc = () => {
+    if (avatarPreview) return avatarPreview;
+    if (!user?.avatar) return null;
+    
+    if (user.avatar.startsWith('http')) return user.avatar;
+    
+    // Attaches your Render server domain securely to the relative path string
+    const baseSlash = user.avatar.startsWith('/') ? '' : '/';
+    return `https://groks-hotel-backend.onrender.com${baseSlash}${user.avatar}`;
+  };
+
+  const AVATAR_SRC = getAvatarSrc()
 
   return (
     <div className="min-h-screen pt-20 pb-24">
@@ -70,7 +82,16 @@ export default function Profile() {
           <div className="relative">
             <div className="w-24 h-24 rounded-full border-2 border-[#C8A96A]/40 overflow-hidden bg-[rgba(200,169,106,0.1)] flex items-center justify-center">
               {AVATAR_SRC ? (
-                <img src={AVATAR_SRC} alt={user?.name} className="w-full h-full object-cover" />
+                <img 
+                  src={AVATAR_SRC} 
+                  alt={user?.name} 
+                  className="w-full h-full object-cover" 
+                  // 🌟 FIXED FALLBACK: Swaps instantly to inline SVG asset if file is missing from disk
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23C8A96A'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>";
+                  }}
+                />
               ) : (
                 <FiUser size={32} className="text-[#C8A96A]/50" />
               )}
