@@ -91,14 +91,20 @@ export default function Navbar() {
 <div className="w-9 h-9 rounded-full border border-[#C8A96A]/40 flex items-center justify-center bg-[rgba(200,169,106,0.1)] text-[#C8A96A] overflow-hidden">
   {user && user.avatar ? (
     <img 
-      src={user.avatar.startsWith('http') ? user.avatar : `https://groks-hotel-backend.onrender.com${user.avatar}`} 
+      // FIXED: Added a fallback forward slash check to guarantee the URL builds correctly
+      src={user.avatar.startsWith('http') 
+        ? user.avatar 
+        : `https://groks-hotel-backend.onrender.com${user.avatar.startsWith('/') ? '' : '/'}${user.avatar}`
+      } 
       alt={user.name} 
       className="w-full h-full object-cover" 
       
-      // 🌟 THE FOOLPROOF FIX: If the backend returns a 404, this event swaps it instantly!
+      // REMOVED: crossOrigin="anonymous" (This stops mobile browsers from blocking the fallback redirect)
+
+      // FIXED FALLBACK: If Render sends a 404, this swaps the source to a reliable inline SVG structure
       onError={(e) => {
-        e.target.onerror = null; // Stops infinite loops if the fallback image fails
-        e.target.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png"; // Clean default icon
+        e.target.onerror = null; 
+        e.target.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23C8A96A'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>";
       }}
     />
   ) : (
